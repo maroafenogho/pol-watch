@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/home"
+            android:icon="@drawable/ic_baseline_home_24"
+            android:title="Home" />
+
+        <item
+            android:id="@+id/menuTakePhoto"
+            android:icon="@drawable/ic_baseline_camera_alt_24"
+            android:title="Take photo" />
+
+        <item
+            android:id="@+id/menuRecordVideo"
+            android:icon="@drawable/ic_baseline_videocam"
+            android:title="Record Video" />
+
+        <item
+            android:id="@+id/menuViewPictures"
+            android:icon="@drawable/ic_baseline_photo_library"
+            android:title="View Pictures" />
+
+        <item
+            android:id="@+id/menuViewVideos"
+            android:icon="@drawable/ic_baseline_video_library"
+            android:title="View Videos" />
+        <item
+            android:id="@+id/menuPendingCases"
+            android:icon="@drawable/ic_baseline_home_24"
+            android:title="Pending Cases" />
+
+    </group>
+
+    <item android:title="Others">
+
+        <menu>
+            <group android:checkableBehavior="single">
+            <item
+                android:id="@+id/menuAbout"
+                android:icon="@drawable/ic_baseline_home_24"
+                android:title="About" />
+
+                <item
+                    android:id="@+id/devotionals"
+                    android:icon="@drawable/ic_baseline_home_24"
+                    android:title="Logout" />
+            </group>
+
+        </menu>
+
+    </item>
+
+</menu>
