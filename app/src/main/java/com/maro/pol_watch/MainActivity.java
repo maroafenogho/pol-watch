@@ -70,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.menuTakePhoto:
                         Intent i = new Intent(MainActivity.this, CameraActivity.class);
                         startActivity(i);
+                        drawerLayout.closeDrawer(GravityCompat.START);
 //                        break;
 //                    case R.id.general:
 //                        loadFragment(new GeneralFragment());

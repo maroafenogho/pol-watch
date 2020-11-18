@@ -8,6 +8,7 @@
 
 
     <uses-feature android:name="android.hardware.camera.any"/>
+    <uses-feature android:name="android.hardware.location" android:required="true"/>
 
     <application
         android:allowBackup="true"
