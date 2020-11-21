@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import com.maro.pol_watch.MainActivity;
 import com.maro.pol_watch.R;
 import com.maro.pol_watch.tools.CameraActivity;
+import com.maro.pol_watch.tools.VideoActivity;
 
 public class HomeFragment extends Fragment {
 
@@ -35,6 +36,14 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(getContext(), CameraActivity.class);
+                startActivity(i);
+            }
+        });
+
+        takeVideo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getContext(), VideoActivity.class);
                 startActivity(i);
             }
         });
