@@ -1,4 +1,22 @@
 <resources>
     <string name="app_name">Pol-Watch</string>
     <string name="address_text">"Address: %1$s \n Timestamp: %2$tr"</string>
+    <string name="login">Login</string>
+    <string name="password">Password</string>
+    <string name="username">Username</string>
+    <string name="enter_your_details_to_login">Enter your details to login</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="email">Email</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="role">Role</string>
+    <string name="already_have_an_account">Already have an account?</string>
+    <string name="sign_in">Sign in</string>
+    <string-array name="roles">
+        <item>citizen</item>
+        <item>police</item>
+        <item>government</item>
+        <item>monitor</item>
+    </string-array>
 </resources>
