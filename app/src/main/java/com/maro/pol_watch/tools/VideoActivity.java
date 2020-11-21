@@ -6,34 +6,28 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.SurfaceTexture;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
-import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.camera.core.Camera;
-import androidx.camera.core.CameraControl;
-import androidx.camera.core.CameraInfo;
 import androidx.camera.core.CameraSelector;
-import androidx.camera.core.FocusMeteringAction;
-import androidx.camera.core.FocusMeteringResult;
-import androidx.camera.core.ImageAnalysis;
-import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.Preview;
+import androidx.camera.core.VideoCapture;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.LifecycleOwner;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -52,7 +46,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
-public class CameraActivity extends AppCompatActivity implements FetchAddressTask.OnTaskCompleted {
+public class VideoActivity extends AppCompatActivity implements FetchAddressTask.OnTaskCompleted {
 
     private FusedLocationProviderClient fusedLocationProviderClient;
     LocationCallback locationCallback;
@@ -66,26 +60,28 @@ public class CameraActivity extends AppCompatActivity implements FetchAddressTas
     private boolean isContinue = false;
     String photoPath;
 
-    private int locationRequestCode = 1000;
-    private double wayLatitude = 0.0;
-    private double wayLongitude = 0.0;
-    private long timeInMilliseconds;
+    PreviewView previewView;
     private int REQUEST_CODE_PERMISSIONS = 1001;
     private final String[] REQUIRED_PERMISSIONS = {"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE",
-            "android.permission.ACCESS_FINE_LOCATION"};
+            "android.permission.ACCESS_FINE_LOCATION", "android.permission.RECORD_AUDIO"};
 
-    PreviewView mPreviewView;
-    ImageView captureImage;
-    ImageCapture imageCapture;
+    ImageView captureButton, stopButton;
+    VideoCapture videoCapture;
 
     LocationManager locationManager;
 
+    @SuppressLint("RestrictedApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_camera);
+        setContentView(R.layout.activity_video_capture);
 
-        locationText = findViewById(R.id.textViewLocation);
+        previewView = findViewById(R.id.videoCamView);
+        captureButton = findViewById(R.id.imageViewRecord);
+        stopButton = findViewById(R.id.imageViewStop);
+        stopButton.setVisibility(View.INVISIBLE);
+
+//        locationText = findViewById(R.id.textViewLocation);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -95,18 +91,13 @@ public class CameraActivity extends AppCompatActivity implements FetchAddressTas
         if (savedInstanceState!=null){
             mTrackingLocation = savedInstanceState.getBoolean(TRACKING_LOCATION_KEY);
         }
-        new GpsUtils(this).turnOnGps(new GpsUtils.onGpsListener() {
-            @Override
-            public void gpsStatus(boolean isGPSEnable) {
-                isGPS = isGPSEnable;
-            }
-        });
+        new GpsUtils(this).turnOnGps(isGPSEnable -> isGPS = isGPSEnable);
 
         locationCallback = new LocationCallback(){
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 if (mTrackingLocation){
-                    new FetchAddressTask(CameraActivity.this, CameraActivity.this)
+                    new FetchAddressTask(VideoActivity.this, VideoActivity.this)
                             .execute(locationResult.getLastLocation());
                 }
             }
@@ -117,12 +108,19 @@ public class CameraActivity extends AppCompatActivity implements FetchAddressTas
 //            getLocation();
             startTrackingLocation();
         }
-        mPreviewView = findViewById(R.id.camera);
-        captureImage = findViewById(R.id.imgCapture);
 
-        captureImage.setOnClickListener(v -> {
-            takePhoto();
-            Toast.makeText(CameraActivity.this, "Camera clisked", Toast.LENGTH_SHORT).show();
+
+        captureButton.setOnClickListener(v -> {
+            stopButton.setVisibility(View.VISIBLE);
+            startRecording();
+            Toast.makeText(VideoActivity.this, "Camera clicked", Toast.LENGTH_SHORT).show();
+        });
+
+        stopButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                videoCapture.stopRecording();
+            }
         });
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -136,7 +134,7 @@ public class CameraActivity extends AppCompatActivity implements FetchAddressTas
         }else{
             mTrackingLocation = true;
             fusedLocationProviderClient.requestLocationUpdates(getLocationRequest(), locationCallback, null);
-            locationText.setText(getString(R.string.address_text, "loading", System.currentTimeMillis()));
+//            locationText.setText(getString(R.string.address_text, "loading", System.currentTimeMillis()));
         }
     }
 
@@ -153,78 +151,47 @@ public class CameraActivity extends AppCompatActivity implements FetchAddressTas
         }, ContextCompat.getMainExecutor(this));
     }
 
+    @SuppressLint("RestrictedApi")
     void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
+                Preview preview = new Preview.Builder()
+                .build();
+        preview.setSurfaceProvider(previewView.createSurfaceProvider());
 
-        CameraControl control = new CameraControl() {
-            @NonNull
-            @Override
-            public ListenableFuture<Void> enableTorch(boolean torch) {
-                return null;
-            }
-
-            @NonNull
-            @Override
-            public ListenableFuture<FocusMeteringResult> startFocusAndMetering(@NonNull FocusMeteringAction action) {
-                return null;
-            }
-
-            @NonNull
-            @Override
-            public ListenableFuture<Void> cancelFocusAndMetering() {
-                return null;
-            }
-
-            @NonNull
-            @Override
-            public ListenableFuture<Void> setZoomRatio(float ratio) {
-                return null;
-            }
-
-            @NonNull
-            @Override
-            public ListenableFuture<Void> setLinearZoom(float linearZoom) {
-                return null;
-            }
-        };
-
-        Preview preview = new Preview.Builder().build();
         CameraSelector cameraSelector = new CameraSelector.Builder()
                 .requireLensFacing(CameraSelector.LENS_FACING_BACK).build();
-        ImageAnalysis imageAnalysis = new ImageAnalysis.Builder().build();
-        ImageCapture.Builder builder = new ImageCapture.Builder();
-
-
-        preview.setSurfaceProvider(mPreviewView.createSurfaceProvider());
-
-        imageCapture = builder.setTargetRotation(this
-                .getWindowManager()
-                .getDefaultDisplay()
-                .getRotation())
+        videoCapture = new VideoCapture.Builder()
+                .setCameraSelector(cameraSelector)
+                .setVideoFrameRate(24)
+                .setTargetRotation(this
+                        .getWindowManager()
+                        .getDefaultDisplay()
+                        .getRotation())
                 .build();
 
-        try {
+        try{
             cameraProvider.unbindAll();
-            cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, preview, imageAnalysis, imageCapture);
+            cameraProvider.bindToLifecycle(this,cameraSelector,videoCapture,preview);
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     @SuppressLint("MissingPermission")
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
-       switch (requestCode){
-           case 1000: {
-               if (grantResults.length > 0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+        switch (requestCode){
+            case 1000: {
+                if (grantResults.length > 0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
 //                  getLocation();
-                   startTrackingLocation();
-               }else{
-                   Toast.makeText(this, "Permissions denied", Toast.LENGTH_SHORT).show();
-               }
-               break;
-           }
-       }
+                    startTrackingLocation();
+                }else{
+                    Toast.makeText(this, "Permissions denied", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            }
+        }
 
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
@@ -254,31 +221,29 @@ public class CameraActivity extends AppCompatActivity implements FetchAddressTas
         }
     }
 
-    private void takePhoto(){
+    @SuppressLint("RestrictedApi")
+    private void startRecording(){
         SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
 
 //        File file = new File(Environment.get() + "/DCIM/polwatch",mDateFormat.format(new Date())+ ".jpg");
-        File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES),mDateFormat.format(new Date())+ ".jpg");
 
-//        Bitmap bitmap = new ;
-        ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(file).build();
-        imageCapture.takePicture(outputFileOptions, ContextCompat.getMainExecutor(this), new ImageCapture.OnImageSavedCallback() {
+        //This is where the video file is created.
+        //The getExternalDirectory method is what determines where the file is saved in the device
+        File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES),mDateFormat.format(new Date())+ ".mp4");
+
+        videoCapture.startRecording(file, ContextCompat.getMainExecutor(this), new VideoCapture.OnVideoSavedCallback() {
             @Override
-            public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
-
+            public void onVideoSaved(@NonNull File file) {
                 Uri savedUri = Uri.fromFile(file);
-                String msg = "photo saved: " + savedUri;
-                Toast.makeText(CameraActivity.this, ""+ msg, Toast.LENGTH_SHORT).show();
+                String msg = "video saved: " + savedUri;
+                Toast.makeText(VideoActivity.this, ""+ msg, Toast.LENGTH_SHORT).show();
             }
 
             @Override
-            public void onError(@NonNull ImageCaptureException e) {
-                e.printStackTrace();
-                Log.i("saveFailed", "onError: "+e.toString());
-                Toast.makeText(CameraActivity.this, "" + e.toString(), Toast.LENGTH_SHORT).show();
+            public void onError(int videoCaptureError, @NonNull String message, @Nullable Throwable cause) {
+                Toast.makeText(VideoActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
-
     }
 
     private boolean allPermissionsGranted(){
@@ -322,7 +287,8 @@ public class CameraActivity extends AppCompatActivity implements FetchAddressTas
     @Override
     public void onTaskCompleted(String result) {
         if (mTrackingLocation){
-            locationText.setText(getString(R.string.address_text, result, System.currentTimeMillis()));
+//            locationText.setText(getString(R.string.address_text, result, System.currentTimeMillis()));
         }
     }
+
 }
