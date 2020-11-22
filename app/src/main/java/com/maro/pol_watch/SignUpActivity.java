@@ -10,11 +10,15 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.JsonObject;
+
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -25,8 +29,8 @@ public class SignUpActivity extends AppCompatActivity implements AdapterView.OnI
     Spinner role_spinner;
     String role;
     Button register;
-    private APIService mAPIService;
     TextView login;
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +46,8 @@ public class SignUpActivity extends AppCompatActivity implements AdapterView.OnI
         role_spinner = findViewById(R.id.role);
         register = findViewById(R.id.sign_up);
         login = findViewById(R.id.login);
+        progressBar = findViewById(R.id.progressBar2);
+        progressBar.setVisibility(View.INVISIBLE);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource( this, R.array.roles, android.R.layout.simple_spinner_item);
 
@@ -49,13 +55,13 @@ public class SignUpActivity extends AppCompatActivity implements AdapterView.OnI
 // Apply the adapter to the spinner
         role_spinner.setAdapter(adapter);
         role_spinner.setOnItemSelectedListener(this);
-        mAPIService = ApiUtils.getAPIService();
 
         login.setOnClickListener(view -> {
             startActivity(new Intent(SignUpActivity.this, LoginActivity.class));
         });
 
         register.setOnClickListener(view -> {
+            progressBar.setVisibility(View.VISIBLE);
             String userName = username.getText().toString();
             String Email = email.getText().toString();
             String firstname = firstName.getText().toString();
@@ -64,7 +70,7 @@ public class SignUpActivity extends AppCompatActivity implements AdapterView.OnI
             String number = phone.getText().toString();
 //                role = role_spinner.toString();
 
-            if (userName.length() < 2 || userName.isEmpty()) {
+            if (userName.length() < 2) {
                 Toast.makeText(SignUpActivity.this, "Please enter a username with more than 2 characters", Toast.LENGTH_SHORT).show();
             } else if (Email.isEmpty() || !Email.contains("@")) {
                 Toast.makeText(SignUpActivity.this, "Please enter a valid email", Toast.LENGTH_SHORT).show();
@@ -77,33 +83,48 @@ public class SignUpActivity extends AppCompatActivity implements AdapterView.OnI
             } else if (number.isEmpty() || number.length() < 11) {
                 Toast.makeText(SignUpActivity.this, "Please enter a valid phone number", Toast.LENGTH_SHORT).show();
             } else {
-                registerUser(userName, Email, firstname, lastname, number, passWord, role);
+                reigiater();
+//                registerUser(userName, Email, firstname, lastname, number, passWord, role);
             }
         });
     }
 
-    public void registerUser(String un, String em, String fn, String ln, String pn, String pw, String ro ) {
-        mAPIService.createUser(un, em, fn, ln, pn, pw, ro).enqueue(new Callback<User>() {
+    public void reigiater(){
+        ApiInterface apiInterface;
+        apiInterface = ApiClient.addUser().create(ApiInterface.class);
+
+        User user = new User();
+        user.setUsername(username.getText().toString());
+        user.setFirst_name(firstName.getText().toString());
+        user.setLast_name(lastName.getText().toString());
+        user.setEmail(email.getText().toString());
+        user.setPhone(phone.getText().toString());
+        user.setPassword(password.getText().toString());
+        user.setRole(role);
+
+        Call<JsonObject> call = apiInterface.register(user);
+        call.enqueue(new Callback<JsonObject>() {
             @Override
-            public void onResponse(Call<User> call, Response<User> response) {
-                if(response.isSuccessful()) {
-                    Log.d("whyy", "more why");
-                    startActivity(new Intent(SignUpActivity.this, MainActivity.class));
-                } else {
-                    Log.d("whyy", "less why");
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (response.code()==200){
+                    Toast.makeText(SignUpActivity.this, "SignUp successful", Toast.LENGTH_SHORT).show();
+                    progressBar.setVisibility(View.GONE);
+                }else{
+                    Toast.makeText(SignUpActivity.this, ""+ response.code(), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<User> call, Throwable t) {
-                Toast.makeText(SignUpActivity.this, "Unable to register. Please check your network connection and try again", Toast.LENGTH_SHORT).show();
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                Toast.makeText(SignUpActivity.this, "Unsuccessful" + t.toString(), Toast.LENGTH_SHORT).show();
+                progressBar.setVisibility(View.GONE);
             }
         });
     }
 
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-        role = (String) adapterView.getItemAtPosition(i);
+        role = (String) adapterView.getSelectedItem();
 
     }
 
