@@ -47,7 +47,6 @@ public class SignUpActivity extends AppCompatActivity implements AdapterView.OnI
         register = findViewById(R.id.sign_up);
         login = findViewById(R.id.login);
         progressBar = findViewById(R.id.progressBar2);
-        progressBar.setVisibility(View.INVISIBLE);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource( this, R.array.roles, android.R.layout.simple_spinner_item);
 
@@ -83,13 +82,13 @@ public class SignUpActivity extends AppCompatActivity implements AdapterView.OnI
             } else if (number.isEmpty() || number.length() < 11) {
                 Toast.makeText(SignUpActivity.this, "Please enter a valid phone number", Toast.LENGTH_SHORT).show();
             } else {
-                reigiater();
-//                registerUser(userName, Email, firstname, lastname, number, passWord, role);
+                progressBar.setVisibility(View.VISIBLE);
+                register();
             }
         });
     }
 
-    public void reigiater(){
+    public void register(){
         ApiInterface apiInterface;
         apiInterface = ApiClient.addUser().create(ApiInterface.class);
 
@@ -107,10 +106,12 @@ public class SignUpActivity extends AppCompatActivity implements AdapterView.OnI
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 if (response.code()==200){
-                    Toast.makeText(SignUpActivity.this, "SignUp successful", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(SignUpActivity.this, "SignUp successful", Toast.LENGTH_SHORT).show();
                     progressBar.setVisibility(View.GONE);
+                    startActivity(new Intent(SignUpActivity.this, LoginActivity.class));
                 }else{
                     Toast.makeText(SignUpActivity.this, ""+ response.code(), Toast.LENGTH_SHORT).show();
+                    progressBar.setVisibility(View.GONE);
                 }
             }
 

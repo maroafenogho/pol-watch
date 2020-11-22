@@ -21,6 +21,11 @@ public interface ApiInterface {
            User user
     );
 
+    @POST("/auth/login")
+    Call<JsonObject> login(@Body
+            User user
+    );
+
     @FormUrlEncoded
     @POST("/auth/register")
     Call<ResponseBody> signUp(
