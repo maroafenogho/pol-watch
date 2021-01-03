@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -81,7 +83,7 @@ public class VideoActivity extends AppCompatActivity implements FetchAddressTask
         stopButton = findViewById(R.id.imageViewStop);
         stopButton.setVisibility(View.INVISIBLE);
 
-//        locationText = findViewById(R.id.textViewLocation);
+        locationText = findViewById(R.id.textViewLocation);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -113,14 +115,14 @@ public class VideoActivity extends AppCompatActivity implements FetchAddressTask
         captureButton.setOnClickListener(v -> {
             stopButton.setVisibility(View.VISIBLE);
             startRecording();
+            captureButton.setImageTintList(
+                    ColorStateList.valueOf(getResources().getColor(R.color.base_color)));
             Toast.makeText(VideoActivity.this, "Camera clicked", Toast.LENGTH_SHORT).show();
         });
 
-        stopButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                videoCapture.stopRecording();
-            }
+        stopButton.setOnClickListener(v -> {
+            videoCapture.stopRecording();
+//            stopButton.setVisibility(View.GONE);
         });
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -134,7 +136,7 @@ public class VideoActivity extends AppCompatActivity implements FetchAddressTask
         }else{
             mTrackingLocation = true;
             fusedLocationProviderClient.requestLocationUpdates(getLocationRequest(), locationCallback, null);
-//            locationText.setText(getString(R.string.address_text, "loading", System.currentTimeMillis()));
+            locationText.setText(getString(R.string.address_text, "loading", System.currentTimeMillis()));
         }
     }
 
@@ -236,6 +238,8 @@ public class VideoActivity extends AppCompatActivity implements FetchAddressTask
             public void onVideoSaved(@NonNull File file) {
                 Uri savedUri = Uri.fromFile(file);
                 String msg = "video saved: " + savedUri;
+                captureButton.setImageTintList(ColorStateList.valueOf(Color.RED));
+                stopButton.setVisibility(View.GONE);
                 Toast.makeText(VideoActivity.this, ""+ msg, Toast.LENGTH_SHORT).show();
             }
 
@@ -259,18 +263,11 @@ public class VideoActivity extends AppCompatActivity implements FetchAddressTask
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("GPS is disabled. Please enable it to continue")
                 .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                    }
-                })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                        finish();
-                    }
+                .setPositiveButton("OK", (dialog, which) -> startActivity(
+                        new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)))
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.cancel();
+                    finish();
                 });
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
@@ -287,7 +284,7 @@ public class VideoActivity extends AppCompatActivity implements FetchAddressTask
     @Override
     public void onTaskCompleted(String result) {
         if (mTrackingLocation){
-//            locationText.setText(getString(R.string.address_text, result, System.currentTimeMillis()));
+            locationText.setText(getString(R.string.address_text, result, System.currentTimeMillis()));
         }
     }
 

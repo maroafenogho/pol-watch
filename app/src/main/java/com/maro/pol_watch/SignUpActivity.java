@@ -47,6 +47,7 @@ public class SignUpActivity extends AppCompatActivity implements AdapterView.OnI
         register = findViewById(R.id.sign_up);
         login = findViewById(R.id.login);
         progressBar = findViewById(R.id.progressBar2);
+        progressBar.setVisibility(View.INVISIBLE);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource( this, R.array.roles, android.R.layout.simple_spinner_item);
 
@@ -108,6 +109,7 @@ public class SignUpActivity extends AppCompatActivity implements AdapterView.OnI
                 if (response.code()==200){
 //                    Toast.makeText(SignUpActivity.this, "SignUp successful", Toast.LENGTH_SHORT).show();
                     progressBar.setVisibility(View.GONE);
+                    Toast.makeText(SignUpActivity.this, "SignUp Successful", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(SignUpActivity.this, LoginActivity.class));
                 }else{
                     Toast.makeText(SignUpActivity.this, ""+ response.code(), Toast.LENGTH_SHORT).show();

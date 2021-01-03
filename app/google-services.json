@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "552183579620",
+    "firebase_url": "https://pol-watch.firebaseio.com",
+    "project_id": "pol-watch",
+    "storage_bucket": "pol-watch.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:552183579620:android:551e4d3310677ffdedbdf1",
+        "android_client_info": {
+          "package_name": "com.maro.pol_watch"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "552183579620-of07fs6vjbbq5m8avhrhnsdt4sv30kjc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhM0dDqsXwr2S2Rl5i0zCm9up5OHc2zvw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "552183579620-of07fs6vjbbq5m8avhrhnsdt4sv30kjc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

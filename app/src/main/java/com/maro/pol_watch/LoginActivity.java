@@ -33,6 +33,8 @@ public class LoginActivity extends AppCompatActivity {
         login = findViewById(R.id.login);
 
         progressBar = findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.INVISIBLE);
+
 
         login.setOnClickListener(view -> {
             String username = userName.getText().toString();
@@ -64,7 +66,9 @@ public class LoginActivity extends AppCompatActivity {
                     startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 }else if (response.code()==400){
                     progressBar.setVisibility(View.GONE);
-                    Toast.makeText(LoginActivity.this, "Login unsuccessful, please check your details and try again", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this,
+                            "Login unsuccessful, please check your details and try again" + response.toString(),
+                            Toast.LENGTH_SHORT).show();
                 }else{
                     Toast.makeText(LoginActivity.this, ""+ response.code(), Toast.LENGTH_SHORT).show();
                     progressBar.setVisibility(View.GONE);
